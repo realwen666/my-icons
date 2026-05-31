@@ -65,10 +65,10 @@ function cleanTemp() {
   }
 }
 
-function cloneRepo(repo, targetDir, branch) {
-  console.log(`Cloning: ${repo}${branch ? ` (${branch})` : ''}`);
+function cloneRepo(repo, targetDir, 分支) {
+  console.log(`Cloning: ${repo}${branch ? ` (${分支})` : ''}`);
   try {
-    const branchFlag = branch ? `--branch ${branch}` : '';
+    const branchFlag = branch ? `--branch ${分支}` : '';
     execSync(`git clone --depth 1 ${branchFlag} ${repo} ${targetDir}`, {
       stdio: 'pipe',
       timeout: 120000
