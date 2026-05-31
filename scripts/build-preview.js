@@ -1,245 +1,226 @@
 #!/usr/bin/env node
-/**
- * build-preview.js
- * 生成图标预览 HTML 页面
- * 基于模板填充图标数据
- */
-
 const fs = require('fs-extra');
 const path = require('path');
 const glob = require('glob');
 
-// ==================== 配置 ====================
 const ROOT_DIR = process.cwd();
 const ICONS_DIR = path.join(ROOT_DIR, 'icons');
 const DIST_DIR = path.join(ROOT_DIR, 'dist');
-const TEMPLATES_DIR = path.join(ROOT_DIR, 'templates');
 
-// GitHub 仓库地址（用于页脚链接）
-const REPO_URL = 'https://github.com/yourname/github-icon-collection';
-
-// ==================== 核心逻辑 ====================
-
-/**
- * 生成合法的 symbol ID（与 build-sprite.js 保持一致）
- */
 function generateSymbolId(relativePath) {
-  const id = relativePath
+  return relativePath
     .replace(/\.svg$/, '')
-    .replace(/[\\\/]/g, '-')
+    .replace(/[\\/]/g, '-')
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
-  
-  return id;
 }
 
-/**
- * 提取 SVG 的 viewBox
- */
 function extractViewBox(content) {
   const match = content.match(/viewBox=["']([^"']+)["']/);
   return match ? match[1] : '0 0 24 24';
 }
 
-/**
- * 提取 SVG 内部内容
- */
 function extractContent(content) {
-  let inner = content
+  return content
     .replace(/<\?xml[^?]*\?>/, '')
     .replace(/<!DOCTYPE[^>]*>/, '')
     .replace(/<svg[^>]*>/, '')
-    .replace(/<\/svg>/, '');
-  
-  inner = inner
+    .replace(/<\/svg>/, '')
     .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '')
-    .replace(/<desc[^>]*>[\s\S]*?<\/desc>/gi, '');
-  
-  return inner.trim();
+    .replace(/<desc[^>]*>[\s\S]*?<\/desc>/gi, '')
+    .trim();
 }
 
-/**
- * 扫描所有图标并按分类组织
- */
 function scanIcons() {
   const categories = {};
-  const allIcons = [];
   
-  // 扫描图标目录
-  const categories_dirs = fs.readdirSync(ICONS_DIR, { withFileTypes: true })
+  const catDirs = fs.readdirSync(ICONS_DIR, { withFileTypes: true })
     .filter(d => d.isDirectory())
     .map(d => d.name);
   
-  for (const cat of categories_dirs) {
-    const catPath = path.join(ICONS_DIR, cat);
-    const pattern = path.join(catPath, '**', '*.svg').replace(/\\/g, '/');
+  for (const cat of catDirs) {
+    const pattern = path.join(ICONS_DIR, cat, '**', '*.svg').replace(/\\/g, '/');
     const files = glob.sync(pattern);
-    
     if (files.length === 0) continue;
     
     const icons = [];
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf-8');
       const relativePath = path.relative(ICONS_DIR, file);
-      const symbolId = generateSymbolId(relativePath);
-      const viewBox = extractViewBox(content);
-      const innerContent = extractContent(content);
-      
-      // 提取显示名称
-      const displayName = path.basename(file, '.svg');
-      
       icons.push({
-        id: symbolId,
-        name: displayName,
-        viewBox,
-        content: innerContent,
+        id: generateSymbolId(relativePath),
+        name: path.basename(file, '.svg'),
+        viewBox: extractViewBox(content),
+        svgContent: extractContent(content),
         path: relativePath
       });
     }
-    
-    // 按名称排序
     icons.sort((a, b) => a.name.localeCompare(b.name));
-    
     categories[cat] = icons;
-    allIcons.push(...icons);
   }
   
-  return { categories, allIcons };
+  return { categories };
 }
 
-/**
- * 生成分类按钮
- */
-function generateCategoryButtons(categories) {
-  return Object.keys(categories).map(cat => {
-    const label = getCategoryLabel(cat);
-    const count = categories[cat].length;
-    return `<button class="category-btn" data-category="${cat}">${label} (${count})</button>`;
-  }).join('\n    ');
-}
-
-/**
- * 获取分类显示名称
- */
-function getCategoryLabel(category) {
-  const labels = {
-    'ui': 'UI 图标',
-    'brands': '品牌 Logo',
-    'flags': '国旗/天气',
-    'dashboard': '仪表盘图标',
-    'macos': 'macOS 图标',
-    'fluent': 'Fluent 图标',
-    'dev': '开发图标',
-    'linux': 'Linux 主题',
-    'custom': '自定义'
+function generatePage(categories) {
+  const catLabels = {
+    'ui': 'UI Icons',
+    'brands': 'Brand Logos',
+    'dashboard': 'Dashboard',
+    'macos': 'macOS',
+    'custom': 'Custom'
   };
-  return labels[category] || category;
-}
-
-/**
- * 生成图标内容
- */
-function generateIconContent(categories) {
-  return Object.entries(categories).map(([cat, icons]) => {
-    const cards = icons.map(icon => `
-      <div class="icon-card" data-id="${icon.id}" data-name="${icon.name.toLowerCase()}" title="点击复制 ID: ${icon.id}">
-        <svg viewBox="${icon.viewBox}" aria-hidden="true">
-          ${icon.content}
-        </svg>
-        <div class="icon-name">${icon.name}</div>
-        <div class="icon-size-label">${icons.length > 100 ? icon.id.substring(0, 20) : icon.id}</div>
-      </div>
-    `).join('');
-    
-    return `
-    <section class="category-section" data-category="${cat}">
-      <h2 class="category-title">${getCategoryLabel(cat)} (${icons.length})</h2>
-      <div class="icon-grid">
-        ${cards}
-      </div>
-    </section>`;
-  }).join('\n');
-}
-
-/**
- * 生成 Sprite 内容（用于预览页面内联）
- */
-function generateSpriteContent(categories) {
-  const symbols = [];
   
+  let allIcons = [];
+  let navButtons = '<button class="cat-btn active" data-cat="all">All</button>';
+  let sections = '';
+  
+  for (const [cat, icons] of Object.entries(categories)) {
+    allIcons.push(...icons);
+    const label = catLabels[cat] || cat;
+    navButtons += `<button class="cat-btn" data-cat="${cat}">${label} (${icons.length})</button>`;
+    
+    let cards = '';
+    for (const icon of icons) {
+      cards += `
+        <div class="card" data-id="${icon.id}" data-name="${icon.name.toLowerCase()}" data-cat="${cat}">
+          <svg viewBox="${icon.viewBox}">${icon.svgContent}</svg>
+          <span class="name">${icon.name}</span>
+          <span class="id">${icon.id}</span>
+        </div>`;
+    }
+    
+    sections += `
+      <section class="cat-section" data-cat="${cat}">
+        <h2>${label} <small>(${icons.length})</small></h2>
+        <div class="grid">${cards}</div>
+      </section>`;
+  }
+  
+  // Generate inline sprite
+  let symbols = '';
   for (const icons of Object.values(categories)) {
     for (const icon of icons) {
-      symbols.push(`<symbol id="${icon.id}" viewBox="${icon.viewBox}">${icon.content}</symbol>`);
+      symbols += `<symbol id="${icon.id}" viewBox="${icon.viewBox}">${icon.svgContent}</symbol>`;
     }
   }
   
-  return `<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
-  ${symbols.join('\n  ')}
-</svg>`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Icon Library</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a0a;color:#e5e5e5}
+.header{position:sticky;top:0;background:rgba(10,10,10,.95);border-bottom:1px solid #2a2a2a;padding:1rem 2rem;z-index:100}
+.header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+h1{font-size:1.25rem;white-space:nowrap}
+.search{flex:1;min-width:200px;max-width:400px}
+.search input{width:100%;padding:.5rem 1rem;background:#141414;border:1px solid #2a2a2a;border-radius:.5rem;color:#e5e5e5;outline:none}
+.search input:focus{border-color:#3b82f6}
+.stats{margin-left:auto;font-size:.875rem;color:#888}
+.nav{padding:1rem 2rem;max-width:1400px;margin:0 auto;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.cat-btn{padding:.375rem .75rem;background:#141414;border:1px solid #2a2a2a;border-radius:.375rem;color:#888;font-size:.8125rem;cursor:pointer}
+.cat-btn:hover{border-color:#3b82f6;color:#fff}
+.cat-btn.active{background:#3b82f6;border-color:#3b82f6;color:#fff}
+.container{max-width:1400px;margin:0 auto;padding:0 2rem 2rem}
+section h2{font-size:.875rem;color:#888;text-transform:uppercase;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid #2a2a2a}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.5rem;margin-bottom:2rem}
+.card{background:#141414;border:1px solid #2a2a2a;border-radius:.5rem;padding:1rem;text-align:center;cursor:pointer;transition:all .2s}
+.card:hover{border-color:#3b82f6;transform:translateY(-2px)}
+.card svg{width:24px;height:24px;fill:currentColor;margin-bottom:.5rem}
+.card .name{font-size:.6875rem;color:#888;word-break:break-all;display:block}
+.card .id{font-size:.625rem;color:#555;display:block;margin-top:.25rem}
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);background:#3b82f6;color:#fff;padding:.75rem 1.5rem;border-radius:.5rem;opacity:0;transition:all .3s;z-index:1000;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:4rem;color:#888;display:none}
+.sprite{display:none}
+@media(max-width:768px){.header{padding:1rem}.grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <h1>Icon Library</h1>
+    <div class="search"><input type="text" id="search" placeholder="Search icons..." autocomplete="off"></div>
+    <div class="stats">${allIcons.length} icons</div>
+  </div>
+</div>
+<div class="nav">${navButtons}</div>
+<div class="container" id="container">${sections}</div>
+<div class="empty" id="empty"><p>No icons found</p></div>
+<div class="toast" id="toast"></div>
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg">${symbols}</svg>
+<script>
+const state={cat:'all',q:''};
+const search=document.getElementById('search');
+const container=document.getElementById('container');
+const empty=document.getElementById('empty');
+const toast=document.getElementById('toast');
+const btns=document.querySelectorAll('.cat-btn');
+
+search.addEventListener('input',e=>{state.q=e.target.value.toLowerCase();filter()});
+btns.forEach(b=>b.addEventListener('click',()=>{btns.forEach(x=>x.classList.remove('active'));b.classList.add('active');state.cat=b.dataset.cat;filter()}));
+
+function filter(){
+  const secs=container.querySelectorAll('section');
+  let n=0;
+  secs.forEach(s=>{
+    const cat=s.dataset.cat;
+    const cards=s.querySelectorAll('.card');
+    let sn=0;
+    cards.forEach(c=>{
+      const ok=(state.cat==='all'||c.dataset.cat===state.cat)&&c.dataset.name.includes(state.q);
+      c.style.display=ok?'':'none';
+      if(ok){sn++;n++}
+    });
+    s.style.display=sn>0?'':'none';
+  });
+  container.style.display=n>0?'':'none';
+  empty.style.display=n>0?'none':'';
 }
 
-/**
- * 主函数
- */
+container.addEventListener('click',e=>{
+  const c=e.target.closest('.card');
+  if(!c)return;
+  navigator.clipboard.writeText(c.dataset.id).then(()=>show('Copied: '+c.dataset.id)).catch(()=>{});
+});
+
+function show(msg){
+  toast.textContent=msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),2000);
+}
+</script>
+</body>
+</html>`;
+}
+
 async function main() {
-  console.log('========================================');
-  console.log('📱 预览页面生成工具');
-  console.log('========================================\n');
-  
-  // 检查模板文件
-  const templatePath = path.join(TEMPLATES_DIR, 'preview.html');
-  if (!fs.existsSync(templatePath)) {
-    console.error('❌ 模板文件不存在:', templatePath);
-    return;
-  }
-  
-  // 读取模板
-  let template = fs.readFileSync(templatePath, 'utf-8');
-  
-  // 扫描图标
-  console.log('📁 扫描图标文件...');
-  const { categories, allIcons } = scanIcons();
-  
-  if (allIcons.length === 0) {
-    console.log('⚠️ 没有找到图标文件');
-    return;
-  }
-  
-  console.log(`   ✅ 找到 ${allIcons.length} 个图标，${Object.keys(categories).length} 个分类\n`);
-  
-  // 确保 dist 目录存在
   fs.ensureDirSync(DIST_DIR);
   
-  // 替换模板变量
-  console.log('📝 生成预览页面...');
-  
-  template = template.replace(/\{\{TITLE\}\}/g, 'GitHub Icon Collection');
-  template = template.replace(/\{\{GENERATED_AT\}\}/g, new Date().toLocaleString('zh-CN'));
-  template = template.replace(/\{\{REPO_URL\}\}/g, REPO_URL);
-  template = template.replace(/\{\{CATEGORY_BUTTONS\}\}/g, generateCategoryButtons(categories));
-  template = template.replace(/\{\{ICON_CONTENT\}\}/g, generateIconContent(categories));
-  template = template.replace(/\{\{SPRITE_CONTENT\}\}/g, generateSpriteContent(categories));
-  
-  // 写入文件
-  const outputPath = path.join(DIST_DIR, 'index.html');
-  fs.writeFileSync(outputPath, template, 'utf-8');
-  
-  console.log(`   ✅ ${outputPath}`);
-  
-  // 汇总
-  console.log('\n========================================');
-  console.log('📊 预览页面生成完成');
-  console.log('========================================');
-  console.log(`📦 总图标数: ${allIcons.length}`);
-  console.log(`📂 分类:`);
-  for (const [cat, icons] of Object.entries(categories)) {
-    console.log(`   - ${getCategoryLabel(cat)}: ${icons.length} 个`);
+  if (!fs.existsSync(ICONS_DIR)) {
+    console.log('No icons directory found');
+    return;
   }
-  console.log('\n📁 输出文件:');
-  console.log('   dist/index.html - 预览页面');
-  console.log('\n💡 部署到 GitHub Pages 后即可在线预览');
+  
+  const { categories } = scanIcons();
+  const total = Object.values(categories).reduce((a, v) => a + v.length, 0);
+  
+  if (total === 0) {
+    console.log('No icons found');
+    return;
+  }
+  
+  console.log(`Found ${total} icons in ${Object.keys(categories).length} categories`);
+  
+  const html = generatePage(categories);
+  fs.writeFileSync(path.join(DIST_DIR, 'index.html'), html, 'utf-8');
+  console.log('Generated dist/index.html');
 }
 
 main().catch(console.error);
