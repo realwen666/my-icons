@@ -76,7 +76,7 @@ const SOURCES = [
     targetPath: 'icons/ui/bootstrap',
     include: (file) => file.endsWith('.svg'),
     description: 'Bootstrap 官方图标'
-  },
+  }，
   
   // ===== 品牌/Logo 图标 =====
   {
@@ -101,7 +101,7 @@ const SOURCES = [
     name: 'academicons',
     repo: 'https://github.com/jpswalsh/academicons.git',
     sourcePath: 'svg',
-    targetPath: 'icons/brands/academicons',
+    targetPath: 'icons/brands/academicons'，
     include: (file) => file.endsWith('.svg'),
     description: '学术/科研图标'
   },
@@ -266,7 +266,7 @@ const SOURCES = [
   {
     name: 'papirus',
     repo: 'https://github.com/PapirusDevelopmentTeam/papirus-icon-theme.git',
-    sourcePath: 'Papirus',
+    sourcePath: 'Papirus/48x48/apps',   // ← 只取 48x48 应用图标
     targetPath: 'icons/linux/papirus',
     include: (file) => file.endsWith('.svg'),
     description: 'Papirus Linux 图标主题'
