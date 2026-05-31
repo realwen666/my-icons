@@ -34,11 +34,11 @@ const SOURCES = [
   }
 ];
 
-const TEMP_DIR = '.temp';
+const TEMP = '.temp';
 const ROOT = process.cwd();
 
 function clean() {
-  if (fs.existsSync(TEMP_DIR)) fs.removeSync(TEMP_DIR);
+  if (fs.existsSync(TEMP)) fs.removeSync(TEMP);
 }
 
 function clone(repo, dir) {
@@ -83,8 +83,8 @@ async function main() {
   cleanOld();
 
   for (const s of SOURCES) {
-    const dir = path.join(TEMP_DIR, s.name);
-    console.log(`\nFetching: ${s.name}`);
+    const dir = path.join(TEMP, s.name);
+    console.log(`Fetching: ${s.name}`);
     if (!clone(s.repo, dir)) continue;
     const n = copy(path.join(dir, s.sourcePath), path.join(ROOT, s.targetPath), s.include);
     console.log(`  Copied ${n} icons`);
@@ -92,21 +92,21 @@ async function main() {
   }
 
   clean();
-
+  
   let total = 0;
   const walk = (d) => {
     if (!fs.existsSync(d)) return;
     for (const i of fs.readdirSync(d, { withFileTypes: true })) {
       const p = path.join(d, i.name);
       if (i.isDirectory()) walk(p);
-      else if (i.name.endsWith('.svg') || i.name.endsWith('.png')) total++;
+      else if (i.name.endsWith('.png') || i.name.endsWith('.svg')) total++;
     }
   };
   walk(path.join(ROOT, 'icons'));
 
   fs.ensureDirSync(path.join(ROOT, 'dist'));
   fs.writeFileSync(path.join(ROOT, 'dist', 'metadata.json'), JSON.stringify({ total, at: new Date().toISOString() }, null, 2));
-  console.log(`\nDone. Total: ${total} icons`);
+  console.log(`\nTotal: ${total} icons`);
 }
 
 main().catch(console.error);
