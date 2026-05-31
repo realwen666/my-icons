@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}} - 图标库预览</title>
+  <style>
+    /* ===== 基础样式 ===== */
+    :root {
+      --bg: #0a0a0a;
+      --bg-card: #141414;
+      --border: #2a2a2a;
+      --text: #e5e5e5;
+      --text-muted: #888;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    
+    /* ===== 头部 ===== */
+    .header {
+      position: sticky;
+      top: 0;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+      padding: 1rem 2rem;
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    
+    .header-stats {
+      display: flex;
+      gap: 1rem;
+      margin-left: auto;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    /* ===== 搜索栏 ===== */
+    .search-bar {
+      flex: 1;
+      min-width: 200px;
+      max-width: 400px;
+      position: relative;
+    }
+    
+    .search-bar input {
+      width: 100%;
+      padding: 0.5rem 1rem 0.5rem 2.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    
+    .search-bar input:focus {
+      border-color: var(--accent);
+    }
+    
+    .search-bar::before {
+      content: '🔍';
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.875rem;
+      opacity: 0.5;
+    }
+    
+    /* ===== 控制栏 ===== */
+    .controls {
+      padding: 1rem 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .category-btn {
+      padding: 0.375rem 0.75rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.375rem;
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .category-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    
+    .category-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    
+    .size-control {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+    
+    .size-control input[type="range"] {
+      width: 100px;
+    }
+    
+    /* ===== 图标网格 ===== */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+    }
+    
+    .category-section {
+      margin-bottom: 2rem;
+    }
+    
+    .category-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.5rem;
+    }
+    
+    .icon-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    
+    .icon-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+    
+    .icon-card svg {
+      width: var(--icon-size, 24px);
+      height: var(--icon-size, 24px);
+      fill: currentColor;
+      margin-bottom: 0.5rem;
+      transition: transform 0.2s;
+    }
+    
+    .icon-card:hover svg {
+      transform: scale(1.1);
+    }
+    
+    .icon-name {
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      word-break: break-all;
+      line-height: 1.3;
+    }
+    
+    .icon-size-label {
+      font-size: 0.625rem;
+      color: #555;
+      margin-top: 0.25rem;
+    }
+    
+    /* ===== 复制提示 ===== */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--accent);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    
+    /* ===== 空状态 ===== */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+    
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+    
+    /* ===== 页脚 ===== */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: #444;
+      font-size: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    
+    /* ===== 响应式 ===== */
+    @media (max-width: 768px) {
+      .header {
+        padding: 1rem;
+      }
+      
+      .header-stats {
+        width: 100%;
+        margin-left: 0;
+        order: 3;
+      }
+      
+      .search-bar {
+        max-width: none;
+        order: 2;
+      }
+      
+      .icon-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 头部 -->
+  <header class="header">
+    <div class="header-content">
+      <h1>{{TITLE}}</h1>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="搜索图标..." autocomplete="off">
+      </div>
+      <div class="header-stats">
+        <span class="stat-item">📦 <strong id="totalCount">0</strong> 个图标</span>
+        <span class="stat-item">📂 <strong id="categoryCount">0</strong> 个分类</span>
+        <span class="stat-item">🕐 {{GENERATED_AT}}</span>
+      </div>
+    </div>
+  </header>
+  
+  <!-- 控制栏 -->
+  <div class="controls">
+    <button class="category-btn active" data-category="all">全部</button>
+    {{CATEGORY_BUTTONS}}
+    <div class="size-control">
+      <span>尺寸:</span>
+      <input type="range" id="sizeSlider" min="16" max="48" value="24">
+      <span id="sizeValue">24px</span>
+    </div>
+  </div>
+  
+  <!-- 图标内容 -->
+  <main class="container" id="iconContainer">
+    {{ICON_CONTENT}}
+  </main>
+  
+  <!-- 空状态 -->
+  <div class="empty-state" id="emptyState" style="display: none;">
+    <div class="empty-state-icon">🔍</div>
+    <p>没有找到匹配的图标</p>
+  </div>
+  
+  <!-- 提示 -->
+  <div class="toast" id="toast"></div>
+  
+  <!-- 隐藏的 Sprite -->
+  <div style="display:none">
+    {{SPRITE_CONTENT}}
+  </div>
+  
+  <!-- 页脚 -->
+  <footer class="footer">
+    <p>由 github-icon-collection 自动生成 · {{REPO_URL}}</p>
+  </footer>
+  
+  <script>
+    // ===== 状态管理 =====
+    const state = {
+      currentCategory: 'all',
+      searchQuery: '',
+      iconSize: 24
+    };
+    
+    // ===== DOM 元素 =====
+    const searchInput = document.getElementById('searchInput');
+    const sizeSlider = document.getElementById('sizeSlider');
+    const sizeValue = document.getElementById('sizeValue');
+    const iconContainer = document.getElementById('iconContainer');
+    const emptyState = document.getElementById('emptyState');
+    const toast = document.getElementById('toast');
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    
+    // ===== 搜索功能 =====
+    searchInput.addEventListener('input', (e) => {
+      state.searchQuery = e.target.value.toLowerCase();
+      filterIcons();
+    });
+    
+    // ===== 分类过滤 =====
+    categoryBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        categoryBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.currentCategory = btn.dataset.category;
+        filterIcons();
+      });
+    });
+    
+    // ===== 尺寸控制 =====
+    sizeSlider.addEventListener('input', (e) => {
+      state.iconSize = e.target.value;
+      sizeValue.textContent = e.target.value + 'px';
+      updateIconSize();
+    });
+    
+    function updateIconSize() {
+      document.documentElement.style.setProperty('--icon-size', state.iconSize + 'px');
+    }
+    
+    // ===== 过滤图标 =====
+    function filterIcons() {
+      const sections = iconContainer.querySelectorAll('.category-section');
+      let totalVisible = 0;
+      
+      sections.forEach(section => {
+        const category = section.dataset.category;
+        const cards = section.querySelectorAll('.icon-card');
+        let sectionVisible = 0;
+        
+        cards.forEach(card => {
+          const name = card.dataset.name;
+          const matchesSearch = name.includes(state.searchQuery);
+          const matchesCategory = state.currentCategory === 'all' || category === state.currentCategory;
+          
+          if (matchesSearch && matchesCategory) {
+            card.style.display = '';
+            sectionVisible++;
+            totalVisible++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+        
+        // 如果分类下没有可见图标，隐藏整个分类
+        section.style.display = sectionVisible > 0 ? '' : 'none';
+      });
+      
+      // 显示/隐藏空状态
+      if (totalVisible === 0) {
+        iconContainer.style.display = 'none';
+        emptyState.style.display = '';
+      } else {
+        iconContainer.style.display = '';
+        emptyState.style.display = 'none';
+      }
+    }
+    
+    // ===== 复制功能 =====
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+    
+    iconContainer.addEventListener('click', (e) => {
+      const card = e.target.closest('.icon-card');
+      if (!card) return;
+      
+      const iconName = card.dataset.name;
+      const iconId = card.dataset.id;
+      
+      // 复制 ID 到剪贴板
+      navigator.clipboard.writeText(iconId).then(() => {
+        showToast(`已复制: ${iconId}`);
+      }).catch(() => {
+        // 降级方案
+        const textarea = document.createElement('textarea');
+        textarea.value = iconId;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`已复制: ${iconId}`);
+      });
+    });
+    
+    // ===== 初始化 =====
+    updateIconSize();
+    
+    // 更新统计
+    const allCards = iconContainer.querySelectorAll('.icon-card');
+    document.getElementById('totalCount').textContent = allCards.length;
+    const allSections = iconContainer.querySelectorAll('.category-section');
+    document.getElementById('categoryCount').textContent = allSections.length;
+  </script>
+</body>
+</html>
