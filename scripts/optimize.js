@@ -20,8 +20,6 @@ const SVGO_CONFIG = {
         overrides: {
           // 不移除 viewBox（对响应式很重要）
           removeViewBox: false,
-          // 不移除 xmlns
-          removeXMLNS: false,
           // 清理 fill 属性（让 CSS 能控制颜色）
           removeUselessStrokeAndFill: {
             removeNone: true
@@ -29,6 +27,7 @@ const SVGO_CONFIG = {
         }
       }
     },
+    // 不要 removeXMLNS，放在这里 SVGO 会报错
     // 确保有 viewBox
     {
       name: 'removeDimensions',
